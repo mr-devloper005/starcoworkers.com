@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Compass, Search, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Compass, MapPin, Search, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContentImage } from "@/components/shared/content-image";
 import { SITE_CONFIG, type TaskConfig } from "@/lib/site-config";
@@ -10,6 +10,29 @@ import { siteContent } from "@/config/site.content";
 import { SITE_THEME } from "@/config/site.theme";
 
 const FALLBACK_IMAGE = "/placeholder.svg?height=1400&width=2400";
+
+const CITIES = [
+  "Mumbai",
+  "Delhi",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Pune",
+  "Ahmedabad",
+  "Jaipur",
+  "Surat",
+  "Lucknow",
+  "Kanpur",
+  "Nagpur",
+  "Indore",
+  "Thane",
+  "Bhopal",
+  "Visakhapatnam",
+  "Vadodara",
+  "Firozabad",
+  "Ludhiana",
+];
 
 const heroClasses = {
   'search-first': {
@@ -65,9 +88,23 @@ export function HeroSection({ images, tasks }: { images: string[]; tasks: TaskCo
   }, [images]);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedTask, setSelectedTask] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [taskQuery, setTaskQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+  const [showTaskDropdown, setShowTaskDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const primaryTask = tasks.find((task) => task.key === SITE_THEME.home.primaryTask) || tasks[0];
   const featuredTasks = tasks.filter((task) => SITE_THEME.home.featuredTaskKeys.includes(task.key)).slice(0, 3);
   const palette = heroClasses[SITE_THEME.hero.variant];
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (selectedTask) params.append("task", selectedTask);
+    if (selectedCity) params.append("city", selectedCity);
+    const queryString = params.toString();
+    window.location.href = `/listings${queryString ? `?${queryString}` : ""}`;
+  };
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -76,6 +113,19 @@ export function HeroSection({ images, tasks }: { images: string[]; tasks: TaskCo
     }, 5000);
     return () => window.clearInterval(timer);
   }, [slides]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.search-form-container')) {
+        setShowTaskDropdown(false);
+        setShowCityDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <section className={`relative overflow-hidden ${palette.section}`}>
@@ -105,6 +155,115 @@ export function HeroSection({ images, tasks }: { images: string[]; tasks: TaskCo
               {siteContent.hero.title[0]} <span className="block opacity-90">{siteContent.hero.title[1]}</span>
             </h1>
             <p className={`mt-6 max-w-2xl text-base leading-8 sm:text-lg ${palette.body}`}>{siteContent.hero.description}</p>
+
+            {/* Search Form */}
+            <div className={`mt-8 rounded-2xl p-4 sm:p-5 ${palette.card} search-form-container`}>
+              <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
+                {/* What do you need today */}
+                <div className="space-y-2 relative z-20">
+                  <label className={`text-xs font-semibold uppercase tracking-[0.2em] opacity-70 ${palette.body}`}>
+                    What do you need today
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                      <Search className="h-4 w-4 opacity-50" />
+                    </div>
+                    <input
+                      type="text"
+                      value={taskQuery}
+                      onChange={(e) => {
+                        setTaskQuery(e.target.value);
+                        setShowTaskDropdown(true);
+                      }}
+                      onFocus={() => setShowTaskDropdown(true)}
+                      placeholder="Type to search services..."
+                      className="w-full rounded-xl border bg-white h-12 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 relative z-10 pointer-events-auto"
+                      autoComplete="off"
+                    />
+                    {showTaskDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-xl shadow-lg z-50 max-h-60 overflow-auto">
+                        {tasks
+                          .filter(t => t.enabled && t.label.toLowerCase().includes(taskQuery.toLowerCase()))
+                          .map((task) => (
+                            <button
+                              key={task.key}
+                              onClick={() => {
+                                setSelectedTask(task.key);
+                                setTaskQuery(task.label);
+                                setShowTaskDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-100 first:rounded-t-xl last:rounded-b-xl"
+                            >
+                              {task.label}
+                            </button>
+                          ))}
+                        {tasks.filter(t => t.enabled && t.label.toLowerCase().includes(taskQuery.toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-slate-400">No service found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Choose area or city */}
+                <div className="space-y-2 relative z-20">
+                  <label className={`text-xs font-semibold uppercase tracking-[0.2em] opacity-70 ${palette.body}`}>
+                    Choose area or city
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                      <MapPin className="h-4 w-4 opacity-50" />
+                    </div>
+                    <input
+                      type="text"
+                      value={cityQuery}
+                      onChange={(e) => {
+                        setCityQuery(e.target.value);
+                        setShowCityDropdown(true);
+                      }}
+                      onFocus={() => setShowCityDropdown(true)}
+                      placeholder="Type to search cities..."
+                      className="w-full rounded-xl border bg-white h-12 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 relative z-10 pointer-events-auto"
+                      autoComplete="off"
+                    />
+                    {showCityDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-xl shadow-lg z-50 max-h-60 overflow-auto">
+                        {CITIES
+                          .filter(city => city.toLowerCase().includes(cityQuery.toLowerCase()))
+                          .map((city) => (
+                            <button
+                              key={city}
+                              onClick={() => {
+                                setSelectedCity(city);
+                                setCityQuery(city);
+                                setShowCityDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-100 first:rounded-t-xl last:rounded-b-xl"
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        {CITIES.filter(city => city.toLowerCase().includes(cityQuery.toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-slate-400">No city found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search Button */}
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleSearch}
+                    size="lg"
+                    className={`w-full sm:w-auto rounded-xl px-8 h-12 ${palette.primary}`}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </Button>
+                </div>
+              </div>
+            </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className={`rounded-full px-6 ${palette.primary}`}>

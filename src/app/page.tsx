@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Bookmark, Building2, Compass, FileText, Globe2, Image as ImageIcon, LayoutGrid, MapPin, ShieldCheck, Tag, User } from 'lucide-react'
+import { ArrowRight, Bookmark, Building2, Compass, FileText, Globe2, Image as ImageIcon, LayoutGrid, ShieldCheck, Tag, User } from 'lucide-react'
 import { ContentImage } from '@/components/shared/content-image'
 import { NavbarShell } from '@/components/shared/navbar-shell'
 import { Footer } from '@/components/shared/footer'
@@ -14,6 +14,7 @@ import { getFactoryState } from '@/design/factory/get-factory-state'
 import { getProductKind, type ProductKind } from '@/design/factory/get-product-kind'
 import type { SitePost } from '@/lib/site-connector'
 import { HOME_PAGE_OVERRIDE_ENABLED, HomePageOverride } from '@/overrides/home-page'
+import { DirectorySearchForm } from '@/components/home/directory-search-form'
 
 export const revalidate = 300
 
@@ -166,14 +167,7 @@ function DirectoryHome({ primaryTask, enabledTasks, listingPosts, classifiedPost
               </h1>
               <p className={`mt-6 max-w-2xl text-base leading-8 ${tone.muted}`}>{SITE_CONFIG.description}</p>
 
-              <div className={`mt-8 grid gap-3 rounded-[2rem] p-4 ${tone.panel} md:grid-cols-[1.25fr_0.8fr_auto]`}>
-                <div className="rounded-full bg-black/5 px-4 py-3 text-sm">What do you need today?</div>
-                <div className="rounded-full bg-black/5 px-4 py-3 text-sm">Choose area or city</div>
-                <Link href={primaryTask?.route || '/listings'} className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold ${tone.action}`}>
-                  Browse now
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+              <DirectorySearchForm tone={tone} primaryTask={primaryTask} />
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
